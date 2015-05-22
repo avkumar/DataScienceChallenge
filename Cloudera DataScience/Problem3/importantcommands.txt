@@ -1,0 +1,174 @@
+CREATE TABLE pntd (
+id STRING,
+age STRING,
+gndr STRING,
+inc string
+)
+ROW FORMAT DELIMITED
+        FIELDS TERMINATED BY ' '
+STORED as TEXTFILE
+LOCATION '/tmp/ds/tgt_pntd/pntd'
+
+LOAD DATA LOCAL INPATH '/x/home/hduser/PCDR/PCDR1101.csv' OVERWRITE INTO TABLE table_txt;
+
+export HADOOP_STREAMING_LOCATION=/x/home/nchayapathi/hadoop2/pig-0.10.0-cdh4.2.0/test/e2e/pig/lib/
+hadoop jar $HADOOP_STREAMING_LOCATION/hadoop-streaming.jar \
+    -D stream.non.zero.exit.is.failure=false -D mapred.reduce.tasks=0 \
+    -inputreader "StreamXmlRecordReader,begin=<rows>,end=</rows>"  \
+    -input /tmp/ds/pntd/PNTSDUMP.XML -mapper mapper.py   \
+    -file mapper.py  -reducer reducer.py   \
+    -file reducer.py -output /tmp/ds/tgt_pntd/pntd -numReduceTasks 1
+
+/* Running with Hadoop Streaming */
+
+export HADOOP_STREAMING_LOCATION=/x/home/nchayapathi/hadoop2/pig-0.10.0-cdh4.2.0/test/e2e/pig/lib/
+hadoop jar $HADOOP_STREAMING_LOCATION/hadoop-streaming.jar \
+    -D stream.non.zero.exit.is.failure=false -D mapred.reduce.tasks=0 \
+    -input /tmp/ds/data/distributed \
+    -file nb.pkl \
+    -mapper runClassifierMapper.py \
+    -file runClassifierMapper.py   \
+    -reducer runClassifierReducer.py   \
+    -file runClassifierReducer.py \
+    -output /tmp/ds/data/distributed_out -numReduceTasks 1
+
+
+export MAHOUT_HOME=/x/home/hduser/mahout-distribution-0.8.0.2.0.6.1-102
+export HADOOP_HOME=/usr/lib/hadoop
+export HADOOP_CONF_DIR=/etc/hadoop/conf
+export JAVA_HOME=/usr/java/default
+export PATH=$PATH:$MAHOUT_HOME/bin:$MAHOUT_HOME/lib:$HADOOP_HOME/bin:$JAVA_HOME/bin
+export CLASSPATH=$CLASSPATH:$HADOOP_CONF
+
+
+export MAHOUT_HOME=/x/home/hduser/ds/mahout-distribution-0.8.0.2.0.6.1-102
+export HADOOP_HOME=/usr/lib/hadoop
+export HADOOP_CONF_DIR=/etc/hadoop/conf
+export JAVA_HOME=/usr/java/default
+export PATH=$PATH:$MAHOUT_HOME/bin:$MAHOUT_HOME/lib:$HADOOP_HOME/bin:$JAVA_HOME/bin
+export CLASSPATH=$CLASSPATH:$HADOOP_CONF
+export MAHOUT_LOCAL=0
+
+./mahout org.apache.mahout.classifier.sgd.TrainLogistic --passes 1 \
+--rate 1 --lambda 0.5 --input /x/home/hduser/PNTD/pcdr_pntd_trfmd_review.csv --features 21 \
+--output pcdr.model3 --target gndrM --categories 2 --predictors \
+ageGT65 age65TO74 age75TO84 age85Plus incLT16000 inc16000to23900 \
+inc24000to31999 inc32000to47999 inc48000Plus --types n n
+
+hadoop jar 
+
+$MAHOUT_HOME/mahout-core-0.8.0.2.0.6.1-102-job.jar org.apache.mahout.classifier.sgd.TrainLogistic --passes 1  \
+--rate 1 --lambda 0.5 --input /apps/hive/warehouse/pcdr_pntd_trfmd_review --features 21 \
+--output /tmp/ds/tgt_pntd --target gndrM --categories 2 --predictors \
+ageGT65 age65TO74 age75TO84 age85Plus incLT16000 inc16000to23900 \
+inc24000to31999 inc32000to47999 inc48000Plus --types n n
+
+hadoop jar 
+
+mahout trainlogistic --passes 1 \
+--rate 1 --lambda 0.5 --input /x/home/hduser/ds/PNTD/pcdr_pntd_trfmd.csv --features 21 \
+--output /x/home/hduser/ds/PNTD/sgdmodel1 --target gndrM --categories 2 --predictors \
+ageGT65 age65TO74 age75TO84 age85Plus incLT16000 inc16000to23900 \
+inc24000to31999 inc32000to47999 inc48000Plus --types n n
+
+mahout org.apache.mahout.classifier.sgd.TrainLogistic --passes 1 \
+--rate 1 --lambda 0.5 --input /tmp/ds/examples/pcdr_pntd_trfmd_review_reformed.csv --features 21 \
+--output /tmp/ds/tgt_pntd --target gndrM --categories 2 --predictors \
+ageGT65 age65TO74 age75TO84 age85Plus incLT16000 inc16000to23900 \
+inc24000to31999 inc32000to47999 inc48000Plus --types n n
+
+mahout $MAHOUT_HOME/mahout-examples-0.8.0.2.0.6.1-102-job.jar org.apache.mahout.classifier.sgd.TrainLogistic --passes 1 \
+--rate 1 --lambda 0.5 --input /tmp/ds/examples/pcdr_pntd_trfmd_review_reformed.csv --features 21 \
+--output /tmp/ds/tgt_pntd --target gndrM --categories 2 --predictors \
+ageGT65 age65TO74 age75TO84 age85Plus incLT16000 inc16000to23900 \
+inc24000to31999 inc32000to47999 inc48000Plus --types n n
+
+mahout trainlogistic --passes 1 \
+--rate 1 --lambda 0.5 --input /x/home/hduser/PNTD/trainlogistic.csv --features 21 \
+--output /x/home/hduser/PNTD/pcdr.model10 --target gndrM --categories 2 --predictors \
+ageGT65 age65TO74 age75TO84 age85Plus incLT16000 inc16000to23900 \
+inc24000to31999 inc32000to47999 inc48000Plus --types n n
+
+
+mahout org.apache.mahout.classifier.sgd.TrainLogistic --passes 1 --xm sequential \
+--rate 1 --lambda 0.5 --input /tmp/ds/examples/pcdr_pntd_trfmd_review_reformed.csv --features 21 \
+--output /tmp/ds/tgt_pntd --target gndrM --categories 2 --predictors \
+ageGT65 age65TO74 age75TO84 age85Plus incLT16000 inc16000to23900 \
+inc24000to31999 inc32000to47999 inc48000Plus --types n n
+
+
+mahout org.apache.mahout.classifier.sgd.TrainLogistic -passes 1 \
+-rate 1 -lambda 0.5 -in /x/home/hduser/PNTD/pcdr_pntd_trfmd_review.csv -features 21 \
+-output /x/home/hduser/PNTD/pcdr.model1 -target gndrM -categories 2 -predictors \
+ageGT65 age65TO74 age75TO84 age85Plus incLT16000 inc16000to23900 \
+inc24000to31999 inc32000to47999 inc48000Plus -types n n
+
+
+create table pcdr_pntd_trfmd_1
+(
+procedure_date date,
+procedure_id string,
+id string,
+gndr string,
+age string,
+inc string,
+gndrM int,
+gndrF int,
+ageGT65 int,
+age65TO74 int,
+age75TO84 int,
+age85Plus int,
+incLT16000 int,
+inc16000to23900 int,
+inc24000to31999 int,
+inc32000to47999 int,
+inc48000Plus int
+)
+ROW FORMAT DELIMITED
+        FIELDS TERMINATED BY ','
+STORED as TEXTFILE
+
+mahout org.apache.mahout.classifier.df.tools.Describe -p /tmp/ds/samples/kdd_train.arff -f /tmp/ds/samples/kdd_train_arff.info -d N 3 C 2 N C 4 N C 8 N 2 C 19 N L
+
+
+$mahout org.apache.mahout.classifier.df.mapreduce.BuildForest -Dmapred.max.split.size=1874231 -d /tmp/ds/samples/kdd_train.txt -ds /tmp/ds/samples/kdd_train_arff.info -sl 5 -p -t 100 -o nsl-forest
+
+
+
+
+mahout org.apache.mahout.classifier.df.mapreduce.TestForest -i /tmp/ds/samples/kdd_test.txt -ds /tmp/ds/samples/kdd_train.info -m /user/hdfs/nsl-forest -a -mr -o predictions
+
+
+mahout org.apache.mahout.classifier.df.mapreduce.BuildForest -Dmapred.max.split.size=1874231 -d /tmp/ds/samples/kdd_train.arff -ds /tmp/ds/samples/kdd_train_arff.info -sl 5 -p -t 100 -o nsl-forest
+
+
+
+
+mahout org.apache.mahout.classifier.df.mapreduce.TestForest -i /tmp/ds/samples/kdd_test.arff -ds /tmp/ds/samples/kdd_train_arff.info -m /user/hdfs/nsl-forest -a -mr -o predictions
+
+
+
+hadoop fs -rm -r /tmp/ds/samples/train_data_35T+350T.info
+mahout org.apache.mahout.classifier.df.tools.Describe -p /tmp/ds/samples/train_data_35T+350T -f /tmp/ds/samples/train_data_35T+350T.info -d N 143 C 2 N C N N L
+
+
+mahout org.apache.mahout.classifier.df.tools.Describe -p /tmp/ds/samples/train_data_35T+350T -f /tmp/ds/samples/train_data_35T+350T_1.info -d I 143 C 2 N C N N L
+
+hadoop fs -rm -r /user/hduser/md_forest
+mahout org.apache.mahout.classifier.df.mapreduce.BuildForest -Dmapred.max.split.size=1874231 -d /tmp/ds/samples/train_data_35T+350T -ds /tmp/ds/samples/train_data_35T+350T.info -sl 5 -p -t 100 -o /user/hdfs/md_forest
+
+test_data_15T_2M
+hadoop fs -rm -r /user/hdfs/md_predictions
+mahout org.apache.mahout.classifier.df.mapreduce.TestForest -i /tmp/ds/samples/test_data_15T_2M -ds /tmp/ds/samples/train_data_35T+350T.info -m /user/hdfs/md_forest -a -mr -o /user/hdfs/md_predictions
+
+hadoop fs -rm -r /user/hduser/md_forest
+mahout org.apache.mahout.classifier.df.mapreduce.BuildForest -Dmapred.max.split.size=1874231 -d /tmp/ds/samples/train_data_35T+350T -ds /tmp/ds/samples/train_data_35T+350T_1.info -sl 5 -p -t 100 -o /user/hdfs/md_forest_1
+
+test_data_15T_2M
+hadoop fs -rm -r /user/hdfs/md_predictions
+mahout org.apache.mahout.classifier.df.mapreduce.TestForest -i /tmp/ds/samples/train_data_35T+350T -ds /tmp/ds/samples/train_data_35T+350T_1.info -m /user/hdfs/md_forest -a -mr -o /user/hdfs/md_predictions_1
+
+
+hadoop fs -mkdir /tmp/ds/samples/test
+
+

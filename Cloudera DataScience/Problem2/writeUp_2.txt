@@ -1,0 +1,33 @@
+Approach: We can consider the problem no:2 as outlier detection problem where a particular provider or Region stands out different from other class points in one or more dimensions.
+
+
+Feature selection: For each provider or Region we shall have additional important features like TotalCost , TotalPayment, TotalServices , TotalProcedures, TotalAPC, TotalDRG obtained by summing up over respective provider ids. We neglect the correlation between provider and Region. 
+
+Model Selection criteria: Since there are more than 4 features or dimensions possible for each provider or Region, each point cannot be understood or represented in 2d or 3d plot directly unless any transformations are applied to these points. histograms and box plot digrams would help us understand only the pairwise interactions between the variables. Hence we resort to applying dimension reduction techniques so that points can be represented on a graph and can be differentiated manually. We shall reduce this problem to finding outlier in 2 dimensional graph.
+
+Algorithm: We apply principal component techniques to both part 2a and part 2b. The variability of each variable is different and hence data is scaled first.PCA is applied on scaled data. The results are interesting in the fact that the first two principal components capture 80% and 90% of the variability in the data for providers and regions respectively. Now to visualize the outliers on two dimensional graph, cluster analysis was helpful. We use scree plot i.e. a graph of "Group sum of squares" vs "number of clusters" to estimate the right number of clusters that helps in acheiving the classification. Here "Group sum of squares" is calculated using kmeans clustering. 
+
+Software : Applying  princomp(data=data, COR = TRUE) method in R we shall get principal components which are fewer in number to dimensions. Since the top two principal components hold most of the data we plot 2d graph between them and identify the points that appear like outliers. 
+
+    After estimating the appropriate number of clusters we use CLUSPLOT(x) function in R that gives a very good visualization of clusters with labels of points and clusters and clusters bounded by ellipses
+
+Testing and Validation techniques: The outliers identified in pca analysis also appear as outliers in pairwise plots between variables.
+
+The graphs with pair Wise interactions as well as principalComponents interactions are attached in the code. Also PCA diagrams are shown below in miniature size.
+
+Total time spent: 8 hours
+
+
+
+WHY THREE PROVIDERS ARE DIFFERENT:
+50625,100007, 330101
+The three providers mentioned in the part2a.csv appear as outliers in the PCA cluster analysis. When we look deeper for the reason it appears that total variability in the variable totalSumCost of providers dominates the other variables. Since the major principal components align along the direction of the maximal variability of the data the data points which have extreme values of totalSumCost stand out in the graph attached (ClusPlot_Providers.pdf)
+
+
+WHY THREE REGIONS ARE DIFFERENT:
+Los Angeles,CA
+Boston,MA
+San Mateo County,CA
+
+PCA analysis gives the above three regions to be different from others. The first point Los Angeles,CA has very high TotalSumCost compared to other Regions. The second point Boston,MA has very high number of APC procedures and as a result has high number of services and TotalPayments. The third point San Mateo County,CA interestingly doesnt have any extreme values for any of the above variables. But it shows up as an extreme point in the graph. But one can recall that this point is also one of the answer for 1c i.e. ranks third among 336 regions in collecting highes average claim amount for maximum number of procedures. PA − Philadelphia was also a potential outlier as it stands far away from other cities in PA. Outliers can be seen in (ClusPlot_Regions.pdf)
+
